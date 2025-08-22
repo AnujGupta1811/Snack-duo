@@ -142,7 +142,7 @@ export default function SignIn() {
             </button>
 
             {message && (
-              <p className="mt-3 text-center text-sm text-red-600">{message}</p>
+              <p className="mt-3 text-center text-sm text-green-600">{message}</p>
             )}
 
             <p className="text-center text-sm text-gray-600 mt-4">
