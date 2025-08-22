@@ -74,6 +74,36 @@ app.post("/api/login", async (req, res) => {
     return res.status(500).json({ error: "Database error" });
   }
 });
-
+app.get("/api/products", async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        p.id, p.name, p.price, p.original_price, p.image, 
+        p.category, p.weight, p.description,
+        COALESCE(ROUND(AVG(r.rating),1), 0) AS rating,
+        COUNT(r.id) AS reviews
+      FROM products p
+      LEFT JOIN ratings r ON p.id = r.product_id
+      GROUP BY p.id
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+app.get("/api/products/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await db.query("SELECT * FROM products WHERE id = ?", [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error fetching product" });
+  }
+});
 
 app.listen(5000, () => console.log("🚀 Server running on port 5000"));

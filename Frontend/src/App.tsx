@@ -10,12 +10,12 @@ import About from './components/About';
 import Contact from './components/Contact';
 import ProductSolo from './components/Products/ProductSolo';
 import Signup from './components/authentication/Signup';
-import Signin from './components/authentication/signin';
+import Signin from './components/authentication/Signin';
 
 // Layout handles showing/hiding footer
 function Layout() {
   const location = useLocation();
-  const hideFooterOn = ['/signup','/signin'];
+  const hideFooterOn = ['/signup', '/signin'];
 
   return (
     <div className="min-h-screen">
@@ -26,7 +26,7 @@ function Layout() {
         <Route path="/products" element={<Products />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/product" element={<ProductSolo />} />
+        <Route path="/products/:id" element={<ProductSolo />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/signin" element={<Signin />} />
       </Routes>

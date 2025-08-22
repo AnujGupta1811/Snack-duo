@@ -1,63 +1,58 @@
-import React, { useState } from 'react';
-import { Star, ShoppingCart, Heart, Filter } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Star, ShoppingCart, Heart } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Products = () => {
-  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [products, setProducts] = useState<any[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState("all");
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const products = [
-    {
-      id: 1,
-      name: "Classic Thekua",
-      price: 299,
-      originalPrice: 399,
-      image: "/ProductImage/product1.avif",
-      rating: 4.8,
-      reviews: 124,
-      category: "classic",
-      weight: "500g",
-      description: "Traditional recipe with jaggery and wheat flour"
-    },
-    {
-      id: 2,
-      name: "Premium Thekua",
-      price: 399,
-      originalPrice: 499,
-      image: "/ProductImage/product1.avif",
-      rating: 4.9,
-      reviews: 89,
-      category: "premium",
-      weight: "500g",
-      description: "Made with pure ghee and premium ingredients"
-    },
-    {
-      id: 3,
-      name: "Mini Thekua Pack",
-      price: 199,
-      originalPrice: 249,
-      image: "/ProductImage/product2.avif",
-      rating: 4.7,
-      reviews: 156,
-      category: "mini",
-      weight: "250g",
-      description: "Perfect for gifting and small families"
-    }
+  // Fetch products from backend
+  useEffect(() => {
+    fetch("http://localhost:5000/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        // 🛠️ Fix: Parse image string -> array
+        const fixedData = data.map((p: any) => ({
+          ...p,
+          image:
+            typeof p.image === "string"
+              ? JSON.parse(p.image.replace(/'/g, '"')) // turn "['..']" into [".."]
+              : p.image,
+          price: parseFloat(p.price),
+          original_price: parseFloat(p.original_price),
+          rating: parseFloat(p.rating),
+        }));
+        setProducts(fixedData);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching products:", err);
+        setLoading(false);
+      });
+  }, []);
 
-  ];
-
-
-  const filteredProducts = selectedFilter === 'all'
-    ? products
-    : products.filter(product => product.category === selectedFilter);
+  const filteredProducts =
+    selectedFilter === "all"
+      ? products
+      : products.filter((product) => product.category === selectedFilter);
 
   const toggleFavorite = (productId: number) => {
-    setFavorites(prev =>
+    setFavorites((prev) =>
       prev.includes(productId)
-        ? prev.filter(id => id !== productId)
+        ? prev.filter((id) => id !== productId)
         : [...prev, productId]
     );
   };
+
+  if (loading) {
+    return (
+      <div className="text-center py-20 text-xl text-gray-600">
+        Loading products...
+      </div>
+    );
+  }
 
   return (
     <section id="products" className="py-20 bg-white">
@@ -68,11 +63,10 @@ const Products = () => {
             Our <span className="text-amber-600">Delicious</span> Products
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            From traditional classics to premium varieties, find the perfect Thekua for every occasion
+            From traditional classics to premium varieties, find the perfect
+            Thekua for every occasion
           </p>
         </div>
-
-
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -84,14 +78,19 @@ const Products = () => {
               {/* Product Image */}
               <div className="relative overflow-hidden">
                 <img
-                  src={product.image}
+                  src={product.image?.[0]} // ✅ now works
                   alt={product.name}
                   className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
                 />
 
                 {/* Discount Badge */}
                 <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                  {Math.round(
+                    ((product.original_price - product.price) /
+                      product.original_price) *
+                    100
+                  )}
+                  % OFF
                 </div>
 
                 {/* Favorite Button */}
@@ -101,17 +100,19 @@ const Products = () => {
                 >
                   <Heart
                     className={`h-5 w-5 ${favorites.includes(product.id)
-                      ? 'text-red-500 fill-current'
-                      : 'text-gray-600'
+                      ? "text-red-500 fill-current"
+                      : "text-gray-600"
                       }`}
                   />
                 </button>
 
                 {/* Quick View Overlay */}
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <Link to="/product"><button className="bg-white text-gray-900 px-6 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors">
-                    Quick View
-                  </button></Link>
+                  <Link to={`/products/${product.id}`}>
+                    <button className="bg-white text-gray-900 px-6 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors">
+                      Quick View
+                    </button>
+                  </Link>
                 </div>
               </div>
 
@@ -135,8 +136,8 @@ const Products = () => {
                       <Star
                         key={i}
                         className={`h-4 w-4 ${i < Math.floor(product.rating)
-                          ? 'text-yellow-400 fill-current'
-                          : 'text-gray-300'
+                          ? "text-yellow-400 fill-current"
+                          : "text-gray-300"
                           }`}
                       />
                     ))}
@@ -149,8 +150,12 @@ const Products = () => {
                 {/* Price */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold text-amber-600">₹{product.price}</span>
-                    <span className="text-lg text-gray-400 line-through">₹{product.originalPrice}</span>
+                    <span className="text-2xl font-bold text-amber-600">
+                      ₹{product.price}
+                    </span>
+                    <span className="text-lg text-gray-400 line-through">
+                      ₹{product.original_price}
+                    </span>
                   </div>
                 </div>
 
