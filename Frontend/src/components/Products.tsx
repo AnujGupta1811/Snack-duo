@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Star, ShoppingCart, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -7,6 +7,8 @@ const Products = () => {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [favorites, setFavorites] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
   // Fetch products from backend
   useEffect(() => {
@@ -33,6 +35,25 @@ const Products = () => {
       });
   }, []);
 
+  // Attach observer after loading completes so the element exists
+  useEffect(() => {
+    if (loading) return;
+    const target = sectionRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [loading]);
+
   const filteredProducts =
     selectedFilter === "all"
       ? products
@@ -55,10 +76,10 @@ const Products = () => {
   }
 
   return (
-    <section id="products" className="py-20 bg-white">
+    <section id="products" ref={sectionRef} className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className={`text-center mb-16 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
             Our <span className="text-amber-600">Delicious</span> Products
           </h2>
@@ -69,7 +90,7 @@ const Products = () => {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
           {filteredProducts.map((product) => (
             <div
               key={product.id}
@@ -170,7 +191,7 @@ const Products = () => {
         </div>
 
         {/* Load More Button */}
-        <div className="text-center mt-12">
+        <div className={`text-center mt-12 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <button className="bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-700 px-8 py-3 rounded-full font-semibold transition-colors">
             Load More Products
           </button>

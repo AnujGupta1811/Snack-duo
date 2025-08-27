@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Heart,
   Share2,
@@ -20,6 +20,8 @@ const ProductPage = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -37,6 +39,25 @@ const ProductPage = () => {
 
     fetchProduct();
   }, [id]);
+
+  // Attach observer only after product is loaded and section is mounted
+  useEffect(() => {
+    if (!product) return;
+    const target = sectionRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [product]);
 
   if (!product) {
     return <div className="text-center py-20">Loading product...</div>;
@@ -73,9 +94,9 @@ const ProductPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
       <section id="products" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div ref={sectionRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Product Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
             {/* Image Gallery */}
             <div className="space-y-4">
               <div className="relative group overflow-hidden rounded-2xl bg-white shadow-xl">
@@ -213,7 +234,7 @@ const ProductPage = () => {
           </div>
 
           {/* Features Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
             {features.map((feature, index) => {
               const IconComponent = feature.icon;
               return (
@@ -234,7 +255,9 @@ const ProductPage = () => {
           </div>
 
           {/* Reviews Section */}
-          <ReviewSection />
+          <div className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <ReviewSection />
+          </div>
         </div>
       </section>
     </div>
